@@ -28,7 +28,7 @@ vendors_json = './murl_source/vendors_full.json'
 # Create a whitelist of domains to omit from results
 domain_whitelist_base = ['mozilla.org', 'firefox.com', 'mozilla.net', 'mozilla.com']
 subdomain_whitelist_base = ['safebrowsing.googleapis.com']
-# domain_whitelist_bespoke = [] uncomment this line to add additional domains to omit as needed
+domain_whitelist_bespoke = [] # add additional domains to omit from results 
 verified_dupes_list = ['adobe.com', 'livefyre.com', 'typekit.com', '2o7.net', 'auditude.com', 'demdex.com', 'demdex.net', 'dmtracker.com', 'efrontier.com', 'everestads.net', 'everestjs.net', 'everesttech.net', 'fyre.co', 'hitbox.com', 'omniture.com', 'omtrdc.net', 'touchclarity.com', 'glanceguide.com', 'imrworldwide.com', 'imrworldwide.net', 'nielsen.com', 'oracle.com', 'atgsvcs.com', 'eloqua.com', 'estara.com', 'instantservice.com', 'istrack.com', 'maxymiser.com', 'telaria.com', 'freeskreen.com', 'awin.com', 'digitalwindow.com', 'dwin1.com', 'perfiliate.com']
 domain_whitelist = domain_whitelist_base + domain_whitelist_bespoke
 
@@ -332,7 +332,7 @@ for s in site_list:
 		
 		if params_separate_file == "yes":
 			params_txt_full = f"# {s}\n\n" + params_txt_full
-			create_text("output/parameters.txt", params_txt_full)
+			create_text("results/parameters.txt", params_txt_full)
 		else:
 			report = pd.Series([s, params_txt_full, "DDDUrl Parameters"], index=df_report.columns)
 			df_report = df_report.append(report, ignore_index=True)
