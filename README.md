@@ -4,7 +4,7 @@ MURL takes a list of URLs and maps their domains to any indentified adtech vendo
 
 To use MURL, you need a .txt file with a list of urls or domains. If you are testing multiple sites or scenarios, split each site into a separate .txt file.
 
-A common use case for MURL is to export all urls seen in a proxy capture or a pcap file, and the map those calls to the companies that own the domains.
+A common use case for MURL is to export all urls seen in a proxy capture or a pcap file, and then map those calls to the companies that own the domains.
 
 MURL generates a report that lists out each tested site, with each company contacted during testing for each site. Any domains that were contacted but not mapped to an owner are listed at the end of the report. 
 
