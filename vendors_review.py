@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from pprint import pprint
 from fnmatch import fnmatch
 import pandas as pd
+from pandas import read_csv
 import gc
 import re
 import os
@@ -17,24 +18,12 @@ import markdown
 
 # adjustable values for the doc
 vendors_json = './murl_source/vendors_full.json'
+known_dupes_source = './murl_source/known_dupes.csv'
+known_dupes_list = []
+dupes_count = 0
 
-# Create a whitelist of domains to omit from results
-'''
-no_match_list = []
-review_list = []
-site_list = []
-domain_list = []
-subdomain_list = []
-
-df_vendors_flat = pd.DataFrame(columns=['owner', 'main_id', 'privacy_policy', 'base_url', 'data_purpose_list'])
-df_domains_base = pd.DataFrame(columns=['site_name', 'base_url', 'subdomain', 'encrypted', 'parameters', 'match_id', 'url'])
-df_domains_enchilada = pd.DataFrame(columns=['site_name', 'base_url', 'subdomain', 'encrypted', 'parameter', 'match_id', 'url', 'owner', 'privacy_policy', 'data_purpose_list'])											
-df_report = pd.DataFrame(columns=['site_name', 'report_txt', 'section'])
-
-def create_text(filename,text):
-	with open (filename, 'a') as file:
-		file.write(text)
-'''
+dupes = read_csv(known_dupes_source)
+known_dupes_list = dupes['known_dupes'].tolist()
 
 with open(vendors_json) as input:
 	data = json.load(input)
@@ -54,10 +43,14 @@ for a, b in df_vendors.iterrows():
 		if al not in associated_url_list:
 			associated_url_list.append(al)
 		else:
-			review_url_list.append(al)
-		with open ("urls.csv", 'a') as urls:
-			al = f"{al}\n"
-			urls.write(al)
+			dupes_count += 1
+			if al not in known_dupes_list:
+				review_url_list.append(al)
+			else:
+				pass
+#		with open ("urls.csv", 'a') as urls:
+#			al = f"{al}\n"
+#			urls.write(al)
 	for x in b['other_data_tools']:
 		data_purpose_list.append(x)
 	for x in b['purp_consent']:
@@ -79,7 +72,8 @@ data_purp_unique.sort()
 #for d in data_purp_unique:
 #	print(f"{d}: {data_purpose_list.count(d)}")
 
-for r in review_url_list:
-	print(f"{r}: {review_url_list.count(r)}")
-
-#print(f"This is the review list: {review_url_list}")
+if len(review_url_list) > 0:
+	for r in review_url_list:
+		print(f"{r}: {review_url_list.count(r)}")
+else:
+	print(f"There were {dupes_count} domains that appeared 2 or more times, and {len(known_dupes_list)} domains in the list of verified duplicate domains.")

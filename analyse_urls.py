@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from pprint import pprint
 from fnmatch import fnmatch
 import pandas as pd
+from pandas import read_csv
 import gc
 import re
 import os
@@ -29,8 +30,13 @@ vendors_json = './murl_source/vendors_full.json'
 domain_whitelist_base = ['mozilla.org', 'firefox.com', 'mozilla.net', 'mozilla.com']
 subdomain_whitelist_base = ['safebrowsing.googleapis.com']
 domain_whitelist_bespoke = [] # add additional domains to omit from results 
-verified_dupes_list = ['adobe.com', 'livefyre.com', 'typekit.com', '2o7.net', 'auditude.com', 'demdex.com', 'demdex.net', 'dmtracker.com', 'efrontier.com', 'everestads.net', 'everestjs.net', 'everesttech.net', 'fyre.co', 'hitbox.com', 'omniture.com', 'omtrdc.net', 'touchclarity.com', 'glanceguide.com', 'imrworldwide.com', 'imrworldwide.net', 'nielsen.com', 'oracle.com', 'atgsvcs.com', 'eloqua.com', 'estara.com', 'instantservice.com', 'istrack.com', 'maxymiser.com', 'telaria.com', 'freeskreen.com', 'awin.com', 'digitalwindow.com', 'dwin1.com', 'perfiliate.com']
 domain_whitelist = domain_whitelist_base + domain_whitelist_bespoke
+
+known_dupes_source = './murl_source/known_dupes.csv'
+known_dupes_list = []
+
+dupes = read_csv(known_dupes_source)
+known_dupes_list = dupes['known_dupes'].tolist()
 
 check_results_txt = ""
 
@@ -57,7 +63,7 @@ with open(vendors_json) as input:
 df_vendors=vendors_dataframe.convert_dtypes()
 #print(df_vendors.dtypes)
 
-# prepare vendor list based on associated_urls
+# prepare vendor list organized by associated_urls
 
 for a, b in df_vendors.iterrows():
 	for al in b['associated_urls']:
