@@ -57,53 +57,6 @@ with open(vendors_json) as input:
 df_vendors=vendors_dataframe.convert_dtypes()
 #print(df_vendors.dtypes)
 
-'''
-# This block is used for tuning up the content in the vendors.json file
-# use periodically for removing duplicate and quality review
-# TODO - move to a separate file
-associated_url_list = []
-review_url_list = []
-data_purpose_list = []
-data_purp_unique = []
-org_list = []
-for a, b in df_vendors.iterrows():
-	for al in b['associated_urls']:
-		if al not in associated_url_list:
-			associated_url_list.append(al)
-		else:
-			review_url_list.append(al)
-			print(b['organization_name'])
-		with open ("urls.csv", 'a') as urls:
-			al = f"{al}\n"
-			urls.write(al)
-	for x in b['other_data_tools']:
-		data_purpose_list.append(x)
-	for x in b['purp_consent']:
-		data_purpose_list.append(x)
-	for x in b['purp_li']:
-		data_purpose_list.append(x)
-	for x in b['purp_spec_purp']:
-		data_purpose_list.append(x)
-	for x in b['purp_feat']:
-		data_purpose_list.append(x)
-	for x in b['purp_spec_feat']:
-		data_purpose_list.append(x)
-for dpl in data_purpose_list:
-	if dpl not in data_purp_unique:
-		data_purp_unique.append(dpl)
-	else:
-		pass
-data_purp_unique.sort()
-#for d in data_purp_unique:
-#	print(f"{d}: {data_purpose_list.count(d)}")
-
-for r in review_url_list:
-	print(f"{r}: {review_url_list.count(r)}")
-
-#print(f"This is the review list: {review_url_list}")
-
-'''
-
 # prepare vendor list based on associated_urls
 
 for a, b in df_vendors.iterrows():
