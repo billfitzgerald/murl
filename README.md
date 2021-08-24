@@ -39,3 +39,14 @@ In most cases, this isn't needed, as the defaults work cleanly. However, if you 
 * <code>include_params</code> = "yes" # set as a yes/no value. Setting to "no" excludes all parameters from the report
 * <code>params_separate_file</code> = "yes" # set to "yes" to only write paramaters to a separate file. This is a sane default
 * <code>include_subdomains</code> = "yes" # set as a yes/no value. Setting to "no" excludes all subdomains from the report
+
+## What's in the murl_source directory?
+
+This directory contains two files:
+
+* vendors_full.json - this file lists vendors, known domains
+* known_dupes.csv - this file lists domains that are known to be connected to more than one service. While some domains can be removed from this list with additional research, there are some domains that appear to be used for multiple products offered by the same company.
+
+## I see a problem, or I want to help
+
+If you see something that appears to be inaccurate, please open an issue.
