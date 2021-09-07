@@ -333,25 +333,4 @@ if generate_html == 'yes':
 		text = f.read()
 		html = markdown.markdown(text)
 	create_text(output_html, html)
-#	with open(output_html, 'w') as g:
-#		g.write(html)
-
-
-	# Report:
-	# tested site name - DONE - site_name
-	# count of identified third party domains, with owners - DONE - matched_domains
-	# count of unidentified domains - DONE - unmatched_domains
-	# base_url of unidentified domains
-	# Domain owner
-	# data purpose
-	# domain
-	# subdomain
-	# parameters
-
-	# filter domains with no match - get the list of domains
-	# filter by match ID
-	# get owner
-	# get data purpose
-	# get base_url
-	# for each base_url, get all subdomains
-	# for subdomain, get parameters
+	
