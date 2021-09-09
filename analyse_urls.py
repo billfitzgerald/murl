@@ -38,12 +38,6 @@ domain_whitelist = domain_whitelist_base + domain_whitelist_bespoke
 vendor_base = "./tracker-radar/entities/"
 domains_base = "./tracker-radar/domains/US/"
 
-known_dupes_source = './murl_source/known_dupes.csv'
-known_dupes_list = []
-
-dupes = read_csv(known_dupes_source)
-known_dupes_list = dupes['known_dupes'].tolist()
-
 check_results_txt = ""
 
 no_match_list = []
