@@ -10,6 +10,16 @@ MURL generates a report that lists out each tested site, with each company conta
 
 MURL will also export all URLs that have parameters in a single section. This can simplify searching for and finding sensitive or meaningful information exposed in urls.
 
+MURL makes use of [DuckDuckGo's Tracker Radar](https://github.com/duckduckgo/tracker-radar "The Tracker Radar is amazing. Thank you, DuckDuckGo."), which is included as a submodule.
+
+## Running MURL
+
+MURL was developed against Python 3.7, but it should work on Pyton 3.6 or greater.
+
+Clone the repository onto your local machine. Once you have the repository cloned, run <code>git submodule init</code> to initialize submodule config file. Then, run <code>git submodule update</code> to bring in the code from the Tracker Radar.
+
+For more information and background on working with submodules, [see the book](https://git-scm.com/book/en/v2/Git-Tools-Submodules "Git documentation").
+
 ## Quick start
 
 1. Make sure the <code>source</code> and <code>results</code> directories exist. See **Usage details** below for more information. 
@@ -39,13 +49,6 @@ In most cases, this isn't needed, as the defaults work cleanly. However, if you 
 * <code>include_params</code> = "yes" # set as a yes/no value. Setting to "no" excludes all parameters from the report
 * <code>params_separate_file</code> = "yes" # set to "yes" to only write paramaters to a separate file. This is a sane default
 * <code>include_subdomains</code> = "yes" # set as a yes/no value. Setting to "no" excludes all subdomains from the report
-
-## What's in the murl_source directory?
-
-This directory contains two files:
-
-* vendors_full.json - this file lists vendors, known domains
-* known_dupes.csv - this file lists domains that are known to be connected to more than one service. While some domains can be removed from this list with additional research, there are some domains that appear to be used for multiple products offered by the same company.
 
 ## I see a problem, or I want to help
 
