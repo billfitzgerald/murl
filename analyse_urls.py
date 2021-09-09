@@ -162,17 +162,22 @@ for path, subdirs, files in os.walk(url_source):
 										if pp_count == 0:
 											privacy_policy = "none listed"
 										print(privacy_policy)
-										# 
-										# for each owner:
-										# filter on privacy policy, then list:
-										# base_url, subdomains, encrypted or not
-										domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
-										df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
+										for swb in subdomain_whitelist_base:
+											full = tldextract.extract(swb)
+											sub = full.subdomain
+											base = full.registered_domain
+											if sub == subdomain and base == base_url:
+												pass
+											else: 
+												domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
+												df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
 								else:
 									print(f"\nNo matching file for {vfile_path}\n")
 						else: 
 							owner = "unknown"
 							privacy_policy = ""
+							# TODO iterate through the list of subdomain_whitelist_base 
+							# TODO if the url is from a whitelisted subdomain, don't write the record
 							domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
 							df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
 
@@ -259,32 +264,32 @@ for s in site_list:
 		owner = df_own['owner'].iloc[0]
 		site_intro_txt = site_intro_txt + f" * {owner}\n"
 		owners_txt = f"### {owner_count}. {owner}\n\n"
-		if len(df_own['privacy_policy'].iloc[0]) > 5:
+		# get count of number of unique privacy policies - if greater than 1, handle them differently
+		pp_unique = df_own.privacy_policy.unique()
+		for ppu in pp_unique:
+			df_own_pp = df_own[df_own['privacy_policy'] == ppu]
 			privacy_policy = df_own['privacy_policy'].iloc[0]
 			owners_txt = owners_txt + f'[Privacy policy]({privacy_policy} "Privacy policy for {owner}")\n\n'
-		else:
-			pass
+			own_doms = df_own_pp.base_url.unique()
+			own_doms.sort()
+			owners_txt = owners_txt + "\n#### Domains contacted\n\n"
+			for od in own_doms:	
+				own_doms_subs = []
+				df_own_doms = df_own_pp[df_own_pp['base_url'] == od]
+				own_doms_subs = df_own_doms.subdomain.unique()
+				own_doms_subs.sort()
+				owners_txt = owners_txt + f" * {od}\n"
+				if include_subdomains == "yes":
+					for ods in own_doms_subs:
+						if ods != '[]' and ods != "None": 
+							owners_txt = owners_txt + f"    - {ods}\n"
+						else:
+							pass
+					owners_txt = owners_txt + "\n"
+				else:
+					pass
 
-		own_doms = df_own.base_url.unique()
-		own_doms.sort()
-		owners_txt = owners_txt + "\n#### Domains contacted\n\n"
-		for od in own_doms:	
-			own_doms_subs = []
-			df_own_doms = df_own[df_own['base_url'] == od]
-			own_doms_subs = df_own_doms.subdomain.unique()
-			own_doms_subs.sort()
-			owners_txt = owners_txt + f" * {od}\n"
-			if include_subdomains == "yes":
-				for ods in own_doms_subs:
-					if ods != '[]' and ods != "None": 
-						owners_txt = owners_txt + f"    - {ods}\n"
-					else:
-						pass
-				owners_txt = owners_txt + "\n"
-			else:
-				pass
-
-		owners_txt_full = owners_txt_full + owners_txt
+			owners_txt_full = owners_txt_full + owners_txt
 	
 	unmatched_domains_txt = f"\n### Unmatched domains\n\n"
 	for ud in unmatched_domains_list:
