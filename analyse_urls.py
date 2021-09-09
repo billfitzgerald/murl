@@ -155,7 +155,7 @@ for path, subdirs, files in os.walk(url_source):
 												pass
 										if pp_count == 0:
 											privacy_policy = "none listed"
-										print(privacy_policy)
+											print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
 										for swb in subdomain_whitelist_base:
 											full = tldextract.extract(swb)
 											sub = full.subdomain
@@ -169,7 +169,7 @@ for path, subdirs, files in os.walk(url_source):
 									print(f"\nNo matching file for {vfile_path}\n")
 						else: 
 							owner = "unknown"
-							privacy_policy = ""
+							privacy_policy = "none listed"
 							# TODO iterate through the list of subdomain_whitelist_base 
 							# TODO if the url is from a whitelisted subdomain, don't write the record
 							domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
@@ -258,12 +258,14 @@ for s in site_list:
 		owner = df_own['owner'].iloc[0]
 		site_intro_txt = site_intro_txt + f" * {owner}\n"
 		owners_txt = f"### {owner_count}. {owner}\n\n"
-		# get count of number of unique privacy policies - if greater than 1, handle them differently
 		pp_unique = df_own.privacy_policy.unique()
 		for ppu in pp_unique:
 			df_own_pp = df_own[df_own['privacy_policy'] == ppu]
 			privacy_policy = df_own['privacy_policy'].iloc[0]
-			owners_txt = owners_txt + f'[Privacy policy]({privacy_policy} "Privacy policy for {owner}")\n\n'
+			if privacy_policy == "none listed":
+				owners_txt = owners_txt + f'Privacy policy: {privacy_policy}\n\n'
+			else:
+				owners_txt = owners_txt + f'[Privacy policy]({privacy_policy} "Privacy policy for {owner}")\n\n'
 			own_doms = df_own_pp.base_url.unique()
 			own_doms.sort()
 			owners_txt = owners_txt + "\n#### Domains contacted\n\n"
