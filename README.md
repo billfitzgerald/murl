@@ -16,7 +16,11 @@ MURL makes use of [DuckDuckGo's Tracker Radar](https://github.com/duckduckgo/tra
 
 MURL was developed against Python 3.7, but it should work on Pyton 3.6 or greater.
 
-Clone the repository onto your local machine. Once you have the repository cloned, run <code>git submodule init</code> to initialize submodule config file. Then, run <code>git submodule update</code> to bring in the code from the Tracker Radar.
+Clone the repository onto your local machine:
+
+<code>git clone git@github.com:billfitzgerald/murl.git</code>
+
+Once you have the repository cloned, run <code>git submodule init</code> to initialize submodule config file. Then, run <code>git submodule update</code> to bring in the code from the Tracker Radar.
 
 For more information and background on working with submodules, [see the book](https://git-scm.com/book/en/v2/Git-Tools-Submodules "Git documentation").
 
