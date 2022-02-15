@@ -18,11 +18,11 @@ import markdown
 
 # adjustable values for the doc
 include_params = "yes" # set as a yes/no value. Setting to "no" excludes all parameters from the report
-params_separate_file = "yes" # set to "yes" to only write paramaters to a separate file. This is a sane default
+params_separate_file = "yes" # set to "yes" to only write parameters to a separate file. This is a sane default
 include_subdomains = "yes" # set as a yes/no value. Setting to "no" excludes all subdomains from the report
 generate_html = "yes"
-output_md = "results/summary.md" # this directory must exist
-output_html = "results/summary.html" # this directory must exist
+output_md = "results/news_sites_02_13_22.md" # this directory must exist
+output_html = "results/news_sites_02_13_22.html" # this directory must exist
 url_source = "./source"
 
 # Create a whitelist of domains to omit from results
@@ -155,7 +155,7 @@ for path, subdirs, files in os.walk(url_source):
 												pass
 										if pp_count == 0:
 											privacy_policy = "none listed"
-											print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
+											# print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
 										for swb in subdomain_whitelist_base:
 											full = tldextract.extract(swb)
 											sub = full.subdomain
@@ -166,7 +166,35 @@ for path, subdirs, files in os.walk(url_source):
 												domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
 												df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
 								else:
-									print(f"\nNo matching file for {vfile_path}\n")
+									###
+									vendor_info_2 = 'www.' + vendor_info
+									vfile_path_2 = os.path.join(domains_base,vendor_info_2)
+									if os.path.isfile(vfile_path_2) == True:
+										with open(vfile_path_2) as vd:
+											vendata = json.load(vd)
+											x = vendata['owner']
+											pp_count = 0
+											for y in x:
+												if y == "privacyPolicy":
+													privacy_policy = x[y]
+													pp_count += 1
+												else:
+													pass
+											if pp_count == 0:
+												privacy_policy = "none listed"
+												# print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
+											for swb in subdomain_whitelist_base:
+												full = tldextract.extract(swb)
+												sub = full.subdomain
+												base = full.registered_domain
+												if sub == subdomain and base == base_url:
+													pass
+												else: 
+													domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
+													df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
+									else:
+										print(f"\nNo matching file for {vfile_path} or {vfile_path_2}\n")
+
 						else: 
 							owner = "unknown"
 							privacy_policy = "none listed"
@@ -192,11 +220,10 @@ for path, subdirs, files in os.walk(url_source):
 site_list.sort()
 domain_list.sort()
 
-print(site_list)
-print(domain_list)
+print(f'Site list:\n{site_list}\n* * *\n')
+print(f'Domain list:\n{domain_list}\n* * *\n')
 
 df_domains_enchilada.to_csv("domains_enchilada.csv", encoding='utf-8', index=False)
-
 
 del [df_vendors_lookup]
 gc.collect()
@@ -207,6 +234,34 @@ df_no_match = df_domains_enchilada[df_domains_enchilada['owner'] == "unknown"]
 
 df_match = df_match.sort_values(by='owner', ascending="true")
 df_no_match = df_no_match.sort_values(by='base_url', ascending="true")
+untracked_trackers = df_no_match['base_url'].unique()
+untracked_trackers.sort()
+
+## Get summary of all adtech owners and the domains where they are called
+all_trackers = df_match['owner'].unique()
+
+at_count = 0
+tracker_intro_txt = "## Trackers used across all sites\n\n"
+for at in all_trackers:
+	tracker_text = ""
+	at_count += 1
+	df_at = df_match[df_match['owner'] == at]
+	tracker_name = df_at['owner'].iloc[0]
+	print(f'Tracker: {tracker_name}')
+	used_on = df_at['site_name'].unique()
+	print(f'Used on: {used_on}\n***\n')
+	used_on.sort()
+	use_count = len(used_on)
+	if use_count == 1:
+		uc_text = "used on 1 site."
+	elif use_count > 1:
+		uc_text = f'used on {use_count} sites.'
+	else:
+		uc_text = "check the count. Something is amiss."
+	tracker_text = f'### {tracker_name}, {uc_text}\n\n'
+	tracker_intro_txt = tracker_intro_txt + tracker_text
+	for u in used_on:
+		tracker_intro_txt = tracker_intro_txt + f' * {u}\n'
 
 ## Top level summary of all tests.
 found_domains = df_domains_enchilada['base_url'].nunique()
@@ -218,6 +273,7 @@ for s in site_list:
 	top_level_txt = top_level_txt + f" * {s}\n"
 top_level_txt = top_level_txt + "\n\n"
 
+top_level_txt = top_level_txt + tracker_intro_txt + "\n\n"
 report = pd.Series(["all", top_level_txt, "00 summary"], index=df_report.columns)
 df_report = df_report.append(report, ignore_index=True)
 
@@ -348,3 +404,7 @@ if generate_html == 'yes':
 		text = f.read()
 		html = markdown.markdown(text)
 	create_text(output_html, html)
+
+print(f'## All untracked trackers for review\n\n')
+for u in untracked_trackers:
+	print(f' * {u}\n')
