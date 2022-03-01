@@ -21,14 +21,14 @@ include_params = "yes" # set as a yes/no value. Setting to "no" excludes all par
 params_separate_file = "yes" # set to "yes" to only write parameters to a separate file. This is a sane default
 include_subdomains = "yes" # set as a yes/no value. Setting to "no" excludes all subdomains from the report
 generate_html = "yes"
-output_md = "results/news_sites_02_13_22.md" # this directory must exist
-output_html = "results/news_sites_02_13_22.html" # this directory must exist
+output_md = "results/news_sites_03_01_22.md" # this directory must exist
+output_html = "results/news_sites_03_01_22.html" # this directory must exist
 url_source = "./source"
 
 # Create a whitelist of domains to omit from results
 domain_whitelist_base = ['mozilla.org', 'firefox.com', 'mozilla.net', 'mozilla.com']
-subdomain_whitelist_base = ['safebrowsing.googleapis.com'] # need to implement this
-domain_whitelist_bespoke = [] # add additional domains to omit from results 
+subdomain_whitelist_base = ['safebrowsing.googleapis.com'] 
+domain_whitelist_bespoke = ['bbc.com', 'bloomberg.com', 'businessinsider.com', 'cbsnews.com', 'cnbc.com', 'cnn.com', 'economist.com', 'espn.com', 'forbes.com', 'foxnews.com', 'ft.com', 'huffingtonpost.com', 'independent.co.uk', 'latimes.com', 'marketwatch.com', 'nbcnews.com', 'npr.org', 'nytimes.com', 'pbs.org', 'reuters.com', 'techcrunch.com', 'theatlantic.com', 'theguardian.com', 'theverge.com', 'time.com', 'usatoday.com', 'usnews.com', 'washingtonpost.com', 'wired.com', 'wsj.com'] # add additional domains to omit from results 
 domain_whitelist = domain_whitelist_base + domain_whitelist_bespoke
 
 ##########################################
@@ -50,10 +50,17 @@ df_vendors_lookup = pd.DataFrame(columns=['basefile', 'owner', 'base_url', 'look
 df_vl = pd.DataFrame(columns=['basefile', 'owner', 'domain', 'lookupfile'])
 df_domains_enchilada = pd.DataFrame(columns=['site_name', 'base_url', 'subdomain', 'encrypted', 'parameter', 'url', 'owner', 'privacy_policy'])											
 df_report = pd.DataFrame(columns=['site_name', 'report_txt', 'section'])
+df_tracker_tally = pd.DataFrame(columns=['tracker', 'total_domains'])
+df_domain_tally = pd.DataFrame(columns=['domain', 'found_domains', 'matched_domains', 'matched_owners'])
 
 def create_text(filename,text):
 	with open (filename, 'a') as file:
 		file.write(text)
+
+def clean_string(messy_text):
+	clean_text = re.sub('[^A-Za-z0-9]+', '_', messy_text)
+	clean_text = clean_text.lower()
+	return clean_text
 
 ## create lookup records for domains
 file_ext = "*.json" 
@@ -72,8 +79,7 @@ for path, subdirs, files in os.walk(vendor_base):
 				dom_list = data['properties']
 				for d in dom_list:
 					lookupfile = d + ".json"
-					d_obj = pd.Series([basefile, owner, d, lookupfile], index=df_vendors_lookup.columns)
-					df_vendors_lookup = df_vendors_lookup.append(d_obj, ignore_index=True)
+					df_vendors_lookup.loc[df_vendors_lookup.shape[0]] = [basefile, owner, d, lookupfile]
 				if count == 500:
 					sum_count = sum_count + count
 					count = 0
@@ -124,53 +130,34 @@ for path, subdirs, files in os.walk(url_source):
 						encrypted = "WHOOOAAA"
 						url = line
 					ext = tldextract.extract(url)
+					subdomain = ext.subdomain
 					base_url = ext.registered_domain
-					if base_url not in domain_whitelist:
-						if ext.subdomain == "www" or len(ext.subdomain)< 1:
-							subdomain = "None"
-						else: 
-							subdomain = '.'.join(ext[:3])
+					if len(subdomain) > 0:
+						sub = subdomain + "." + base_url
+					else:
+						sub = "www." + base_url
+					if sub in subdomain_whitelist_base:
+						pass
+					else:
+						if base_url not in domain_whitelist:
+							if ext.subdomain == "www" or len(ext.subdomain)< 1:
+								subdomain = "None"
+							else: 
+								subdomain = '.'.join(ext[:3])
 
-						if "?" in url:
-							parameter = url[url.find("?")+1:].split()[0]
-						else:
-							parameter = "No parameters"
+							if "?" in url:
+								parameter = url[url.find("?")+1:].split()[0]
+							else:
+								parameter = "No parameters"
 
-						df_vendor_data = df_vendors_lookup[df_vendors_lookup['base_url'] == base_url]
-						if df_vendor_data.shape[0] > 0:
-							for a, b in df_vendor_data.iterrows():
-								owner = b['owner']
-								vendor_info = b['lookupfile']
-								vfile_path = os.path.join(domains_base,vendor_info)
-								if os.path.isfile(vfile_path) == True:
-									with open(vfile_path) as vd:
-										vendata = json.load(vd)
-										x = vendata['owner']
-										pp_count = 0
-										for y in x:
-											if y == "privacyPolicy":
-												privacy_policy = x[y]
-												pp_count += 1
-											else:
-												pass
-										if pp_count == 0:
-											privacy_policy = "none listed"
-											# print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
-										for swb in subdomain_whitelist_base:
-											full = tldextract.extract(swb)
-											sub = full.subdomain
-											base = full.registered_domain
-											if sub == subdomain and base == base_url:
-												pass
-											else: 
-												domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
-												df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
-								else:
-									###
-									vendor_info_2 = 'www.' + vendor_info
-									vfile_path_2 = os.path.join(domains_base,vendor_info_2)
-									if os.path.isfile(vfile_path_2) == True:
-										with open(vfile_path_2) as vd:
+							df_vendor_data = df_vendors_lookup[df_vendors_lookup['base_url'] == base_url]
+							if df_vendor_data.shape[0] > 0:
+								for a, b in df_vendor_data.iterrows():
+									owner = b['owner']
+									vendor_info = b['lookupfile']
+									vfile_path = os.path.join(domains_base,vendor_info)
+									if os.path.isfile(vfile_path) == True:
+										with open(vfile_path) as vd:
 											vendata = json.load(vd)
 											x = vendata['owner']
 											pp_count = 0
@@ -190,32 +177,53 @@ for path, subdirs, files in os.walk(url_source):
 												if sub == subdomain and base == base_url:
 													pass
 												else: 
-													domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
-													df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
+													df_domains_enchilada.loc[df_domains_enchilada.shape[0]] = [site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy]
 									else:
-										print(f"\nNo matching file for {vfile_path} or {vfile_path_2}\n")
+										###
+										vendor_info_2 = 'www.' + vendor_info
+										vfile_path_2 = os.path.join(domains_base,vendor_info_2)
+										if os.path.isfile(vfile_path_2) == True:
+											with open(vfile_path_2) as vd:
+												vendata = json.load(vd)
+												x = vendata['owner']
+												pp_count = 0
+												for y in x:
+													if y == "privacyPolicy":
+														privacy_policy = x[y]
+														pp_count += 1
+													else:
+														pass
+												if pp_count == 0:
+													privacy_policy = "none listed"
+													# print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
+												for swb in subdomain_whitelist_base:
+													full = tldextract.extract(swb)
+													sub = full.subdomain
+													base = full.registered_domain
+													if sub == subdomain and base == base_url:
+														pass
+													else: 
+														df_domains_enchilada.loc[df_domains_enchilada.shape[0]] = [site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy]
+										else:
+											print(f"\nNo matching file for {vfile_path} or {vfile_path_2}\n")
 
-						else: 
-							owner = "unknown"
-							privacy_policy = "none listed"
-							# TODO iterate through the list of subdomain_whitelist_base 
-							# TODO if the url is from a whitelisted subdomain, don't write the record
-							domain_obj = pd.Series([site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy], index=df_domains_enchilada.columns)
-							df_domains_enchilada = df_domains_enchilada.append(domain_obj, ignore_index=True)
+							else: 
+								owner = "unknown"
+								privacy_policy = "none listed"
+								df_domains_enchilada.loc[df_domains_enchilada.shape[0]] = [site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy]
+							if site_name not in site_list:
+								site_list.append(site_name)
+							else:
+								pass
 
-						if site_name not in site_list:
-							site_list.append(site_name)
+							if base_url not in domain_list:
+								domain_list.append(base_url)
+							else:
+								pass
+
+
 						else:
 							pass
-
-						if base_url not in domain_list:
-							domain_list.append(base_url)
-						else:
-							pass
-
-
-					else:
-						pass
 
 site_list.sort()
 domain_list.sort()
@@ -241,12 +249,13 @@ untracked_trackers.sort()
 all_trackers = df_match['owner'].unique()
 
 at_count = 0
-tracker_intro_txt = "## Trackers used across all sites\n\n"
+tracker_intro_txt = "## Trackers, Detailed Breakdown\n\n"
 for at in all_trackers:
 	tracker_text = ""
 	at_count += 1
 	df_at = df_match[df_match['owner'] == at]
 	tracker_name = df_at['owner'].iloc[0]
+	anchor = clean_string(tracker_name)
 	print(f'Tracker: {tracker_name}')
 	used_on = df_at['site_name'].unique()
 	print(f'Used on: {used_on}\n***\n')
@@ -258,10 +267,29 @@ for at in all_trackers:
 		uc_text = f'used on {use_count} sites.'
 	else:
 		uc_text = "check the count. Something is amiss."
-	tracker_text = f'### {tracker_name}, {uc_text}\n\n'
+	tracker_text = f'<h3 id="{anchor}">{tracker_name}, {uc_text}</h3>\n\n'
 	tracker_intro_txt = tracker_intro_txt + tracker_text
 	for u in used_on:
-		tracker_intro_txt = tracker_intro_txt + f' * {u}\n'
+		anc = u.replace('.', '')
+		tracker_intro_txt = tracker_intro_txt + f' * <a href="#{anc}" title = "See full breakdown for {u}">{u}</a>\n'
+	df_tracker_tally.loc[df_tracker_tally.shape[0]] = [tracker_name, use_count]
+
+## generate count of trackers in descending order
+
+tracker_short_text = "## Trackers Summary\n\n"
+#df_tracker_tally.sort_values(by='total_domains', ascending="false")
+for j,k in df_tracker_tally.sort_values(by='total_domains', ascending=False).iterrows():
+	tname = k['tracker']
+	use_count = k['total_domains']
+	anchor = clean_string(tname)
+	if use_count == 1:
+		uc_text = "used on 1 site."
+	elif use_count > 1:
+		uc_text = f'used on {use_count} sites.'
+	else:
+		uc_text = "check the count. Something is amiss."
+	tracker_short_text = tracker_short_text + f' * <a href="#{anchor}" title="Jump to {tname}">{tname}</a>, {uc_text}\n'
+
 
 ## Top level summary of all tests.
 found_domains = df_domains_enchilada['base_url'].nunique()
@@ -269,15 +297,7 @@ matched_domains = df_match['base_url'].nunique()
 matched_owners = df_match['owner'].nunique()
 top_level_txt = f"# Testing Summary\n\nIn this testing, {len(site_list)} sites were tested. During testing, {found_domains} third parties were called. {matched_domains} of these third parties are connected to {matched_owners} owners."
 top_level_txt = top_level_txt + f"\nSites examined include:\n\n"
-for s in site_list:
-	top_level_txt = top_level_txt + f" * {s}\n"
-top_level_txt = top_level_txt + "\n\n"
 
-top_level_txt = top_level_txt + tracker_intro_txt + "\n\n"
-report = pd.Series(["all", top_level_txt, "00 summary"], index=df_report.columns)
-df_report = df_report.append(report, ignore_index=True)
-
-# For Site A, we observed B third party domains get contacted as a result of our testing.
 # Site-specific summaries
 for s in site_list:
 	site_name = s
@@ -302,18 +322,21 @@ for s in site_list:
 	domains_list = df_domains_site.base_url.unique()
 	domains_list.sort()
 	print(owners_list)
-
-	site_intro_txt = f"\n# {site_name}\n\nDuring testing, {found_domains} domains were contacted. {matched_domains} domains were controlled by {matched_owners} organizations."
+	anchor = s.replace('.', '')
+	top_level_txt = top_level_txt + f' * <a href="#{anchor}" title = "Jump to {s}">{s}</a> - **{found_domains}** domains contacted. **{matched_domains}** domains mapped to **{matched_owners}** organizations.\n'
+	site_intro_txt = f'\n---\n<h1 id="{anchor}">{site_name}</h1>\n\nDuring testing, {found_domains} domains were contacted. {matched_domains} domains were controlled by {matched_owners} organizations.'
 	site_intro_txt = site_intro_txt + "\nOrganizations contacted include:\n\n"
 	owners_txt_full = ""
 	owner_count = 0
+	## Get count of trackers for each domain
+	df_domain_tally.loc[df_domain_tally.shape[0]] = [site_name, found_domains, matched_domains, matched_owners]
 
 	for m in matched_owners_list:
 		owner_count += 1
 		df_own = df_domains_site[df_domains_site['owner'] == m]
 		owner = df_own['owner'].iloc[0]
-		site_intro_txt = site_intro_txt + f" * {owner}\n"
-		owners_txt = f"### {owner_count}. {owner}\n\n"
+		site_intro_txt = site_intro_txt + f' * {owner}\n'
+		owners_txt = f'### {owner_count}. {owner}\n\n'
 		pp_unique = df_own.privacy_policy.unique()
 		for ppu in pp_unique:
 			df_own_pp = df_own[df_own['privacy_policy'] == ppu]
@@ -364,22 +387,22 @@ for s in site_list:
 			params_txt_full = f"# {s}\n\n" + params_txt_full
 			create_text("results/parameters.txt", params_txt_full)
 		else:
-			report = pd.Series([s, params_txt_full, "DDDUrl Parameters"], index=df_report.columns)
-			df_report = df_report.append(report, ignore_index=True)
+			df_report.loc[df_report.shape[0]] = [s, params_txt_full, "DDDUrl Parameters"]
 		
 	else:
 		pass
 
 	site_intro_txt = site_intro_txt + "\n"
-	report = pd.Series([s, site_intro_txt, "AAAGeneral Information"], index=df_report.columns)
-	df_report = df_report.append(report, ignore_index=True)
 
-	report = pd.Series([s, owners_txt_full, "BBBOrganizations Contacted"], index=df_report.columns)
-	df_report = df_report.append(report, ignore_index=True)
+	df_report.loc[df_report.shape[0]] = [s, site_intro_txt, "AAAGeneral Information"]
 
-	report = pd.Series([s, unmatched_domains_txt, "CCCUnmatched Domains"], index=df_report.columns)
-	df_report = df_report.append(report, ignore_index=True)
+	df_report.loc[df_report.shape[0]] = [s, owners_txt_full, "BBBOrganizations Contacted"]
 
+	df_report.loc[df_report.shape[0]] = [s, unmatched_domains_txt, "CCCUnmatched Domains"]
+
+top_level_txt = top_level_txt + "\n\n"
+top_level_txt = top_level_txt + tracker_short_text + "\n\n" + tracker_intro_txt + "\n\n"
+df_report.loc[df_report.shape[0]] = ["all", top_level_txt, "00 summary"]
 
 df_intro = df_report[df_report['site_name'] == "all"].sort_values(by='section', ascending = "true")
 for i, j in df_intro.iterrows():
@@ -392,7 +415,7 @@ for s in site_list:
 	for o, p in df_output.iterrows():
 		if section_count > 0:
 			section = p['section'][3:]
-			text_write = f"---\n\n## Section {section_count}: {section}\n\n"
+			text_write = f"\n---\n\n## Section {section_count}: {section}\n\n"
 			text_write = text_write + p['report_txt']
 		else:
 			text_write = p['report_txt']
@@ -408,3 +431,6 @@ if generate_html == 'yes':
 print(f'## All untracked trackers for review\n\n')
 for u in untracked_trackers:
 	print(f' * {u}\n')
+
+df_tracker_tally.to_csv("tracker_count.csv", encoding='utf-8', index=False)
+df_domain_tally.to_csv("domain_trackers.csv", encoding='utf-8', index=False)
