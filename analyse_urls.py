@@ -21,14 +21,14 @@ include_params = "yes" # set as a yes/no value. Setting to "no" excludes all par
 params_separate_file = "yes" # set to "yes" to only write parameters to a separate file. This is a sane default
 include_subdomains = "yes" # set as a yes/no value. Setting to "no" excludes all subdomains from the report
 generate_html = "yes"
-output_md = "results/news_sites_03_01_22.md" # this directory must exist
-output_html = "results/news_sites_03_01_22.html" # this directory must exist
+output_md = "results/news_sites_03_07_22.md" # this directory must exist
+output_html = "results/news_sites_03_07_22.html" # this directory must exist
 url_source = "./source"
 
 # Create a whitelist of domains to omit from results
 domain_whitelist_base = ['mozilla.org', 'firefox.com', 'mozilla.net', 'mozilla.com']
 subdomain_whitelist_base = ['safebrowsing.googleapis.com'] 
-domain_whitelist_bespoke = ['bbc.com', 'bloomberg.com', 'businessinsider.com', 'cbsnews.com', 'cnbc.com', 'cnn.com', 'economist.com', 'espn.com', 'forbes.com', 'foxnews.com', 'ft.com', 'huffingtonpost.com', 'independent.co.uk', 'latimes.com', 'marketwatch.com', 'nbcnews.com', 'npr.org', 'nytimes.com', 'pbs.org', 'reuters.com', 'techcrunch.com', 'theatlantic.com', 'theguardian.com', 'theverge.com', 'time.com', 'usatoday.com', 'usnews.com', 'washingtonpost.com', 'wired.com', 'wsj.com'] # add additional domains to omit from results 
+domain_whitelist_bespoke = [] # add additional domains to omit from results
 domain_whitelist = domain_whitelist_base + domain_whitelist_bespoke
 
 ##########################################
@@ -169,7 +169,6 @@ for path, subdirs, files in os.walk(url_source):
 													pass
 											if pp_count == 0:
 												privacy_policy = "none listed"
-												# print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
 											for swb in subdomain_whitelist_base:
 												full = tldextract.extract(swb)
 												sub = full.subdomain
@@ -179,7 +178,6 @@ for path, subdirs, files in os.walk(url_source):
 												else: 
 													df_domains_enchilada.loc[df_domains_enchilada.shape[0]] = [site_name, base_url, subdomain, encrypted, parameter, url, owner, privacy_policy]
 									else:
-										###
 										vendor_info_2 = 'www.' + vendor_info
 										vfile_path_2 = os.path.join(domains_base,vendor_info_2)
 										if os.path.isfile(vfile_path_2) == True:
@@ -195,7 +193,6 @@ for path, subdirs, files in os.walk(url_source):
 														pass
 												if pp_count == 0:
 													privacy_policy = "none listed"
-													# print(f"{owner} doesn't have a privacy policy: {privacy_policy}")
 												for swb in subdomain_whitelist_base:
 													full = tldextract.extract(swb)
 													sub = full.subdomain
@@ -338,34 +335,65 @@ for s in site_list:
 		site_intro_txt = site_intro_txt + f' * {owner}\n'
 		owners_txt = f'### {owner_count}. {owner}\n\n'
 		pp_unique = df_own.privacy_policy.unique()
-		for ppu in pp_unique:
-			df_own_pp = df_own[df_own['privacy_policy'] == ppu]
-			privacy_policy = df_own['privacy_policy'].iloc[0]
-			if privacy_policy == "none listed":
-				owners_txt = owners_txt + f'Privacy policy: {privacy_policy}\n\n'
-			else:
-				owners_txt = owners_txt + f'[Privacy policy]({privacy_policy} "Privacy policy for {owner}")\n\n'
-			own_doms = df_own_pp.base_url.unique()
+		if len(pp_unique) == 1:
+			for ppu in pp_unique:
+				df_own_pp = df_own[df_own['privacy_policy'] == ppu]
+				privacy_policy = df_own['privacy_policy'].iloc[0]
+				if privacy_policy == "none listed":
+					owners_txt = owners_txt + f'Privacy policy: {privacy_policy}\n\n'
+				else:
+					owners_txt = owners_txt + f'[Privacy policy]({privacy_policy} "Privacy policy for {owner}")\n\n'
+				own_doms = df_own_pp.base_url.unique()
+				own_doms.sort()
+				owners_txt = owners_txt + "\n#### Domains contacted\n\n"
+				for od in own_doms:
+					own_doms_subs = []
+					df_own_doms = df_own_pp[df_own_pp['base_url'] == od]
+					own_doms_subs = df_own_doms.subdomain.unique()
+					own_doms_subs.sort()
+					owners_txt = owners_txt + f" * {od}\n"
+					if include_subdomains == "yes":
+						for ods in own_doms_subs:
+							if ods != '[]' and ods != "None":
+								owners_txt = owners_txt + f"    - {ods}\n"
+							else:
+								pass
+						owners_txt = owners_txt + "\n"
+					else:
+						pass
+
+				owners_txt_full = owners_txt_full + owners_txt
+		elif len(pp_unique) > 1:
+			own_doms = df_own.base_url.unique()
 			own_doms.sort()
 			owners_txt = owners_txt + "\n#### Domains contacted\n\n"
-			for od in own_doms:	
+			otd = ""
+			for od in own_doms:
 				own_doms_subs = []
-				df_own_doms = df_own_pp[df_own_pp['base_url'] == od]
+				df_own_doms = df_own[df_own['base_url'] == od]
 				own_doms_subs = df_own_doms.subdomain.unique()
 				own_doms_subs.sort()
-				owners_txt = owners_txt + f" * {od}\n"
+				otd = otd + f" * **{od}**\n"
 				if include_subdomains == "yes":
 					for ods in own_doms_subs:
-						if ods != '[]' and ods != "None": 
-							owners_txt = owners_txt + f"    - {ods}\n"
+						if ods != '[]' and ods != "None":
+							otd = otd + f"    - {ods}\n"
 						else:
 							pass
-					owners_txt = owners_txt + "\n"
+					otd = otd + "\n"
 				else:
 					pass
 
-			owners_txt_full = owners_txt_full + owners_txt
-	
+				privacy_policy = df_own_doms['privacy_policy'].iloc[0]
+				if privacy_policy == "none listed":
+					otd = otd + f' * **Privacy policy**: {privacy_policy}\n\n'
+				else:
+					otd = otd + f' * [**Privacy policy**]({privacy_policy} "Privacy policy for {od}, controlled by {owner}")\n\n'
+
+			owners_txt_full = owners_txt_full + owners_txt + otd
+		else:
+			pass
+
 	unmatched_domains_txt = f"\n### Unmatched domains\n\n"
 	for ud in unmatched_domains_list:
 		unmatched_domains_txt = unmatched_domains_txt + f" * {ud}\n"
@@ -428,9 +456,9 @@ if generate_html == 'yes':
 		html = markdown.markdown(text)
 	create_text(output_html, html)
 
+df_tracker_tally.to_csv("tracker_count.csv", encoding='utf-8', index=False)
+df_domain_tally.to_csv("domain_trackers.csv", encoding='utf-8', index=False)
+
 print(f'## All untracked trackers for review\n\n')
 for u in untracked_trackers:
 	print(f' * {u}\n')
-
-df_tracker_tally.to_csv("tracker_count.csv", encoding='utf-8', index=False)
-df_domain_tally.to_csv("domain_trackers.csv", encoding='utf-8', index=False)
