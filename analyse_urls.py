@@ -21,8 +21,8 @@ include_params = "yes" # set as a yes/no value. Setting to "no" excludes all par
 params_separate_file = "yes" # set to "yes" to only write parameters to a separate file. This is a sane default
 include_subdomains = "yes" # set as a yes/no value. Setting to "no" excludes all subdomains from the report
 generate_html = "yes"
-output_md = "results/news_sites_03_07_22.md" # this directory must exist
-output_html = "results/news_sites_03_07_22.html" # this directory must exist
+output_md = "results/filename.md" # this directory must exist
+output_html = "results/filename.html" # this directory must exist
 url_source = "./source"
 
 # Create a whitelist of domains to omit from results
@@ -443,7 +443,7 @@ for s in site_list:
 	for o, p in df_output.iterrows():
 		if section_count > 0:
 			section = p['section'][3:]
-			text_write = f"\n---\n\n## Section {section_count}: {section}\n\n"
+			text_write = f"\n---\n\n## Section {section_count}: {section} while on {s}\n\n"
 			text_write = text_write + p['report_txt']
 		else:
 			text_write = p['report_txt']
@@ -456,9 +456,9 @@ if generate_html == 'yes':
 		html = markdown.markdown(text)
 	create_text(output_html, html)
 
-df_tracker_tally.to_csv("tracker_count.csv", encoding='utf-8', index=False)
-df_domain_tally.to_csv("domain_trackers.csv", encoding='utf-8', index=False)
-
 print(f'## All untracked trackers for review\n\n')
 for u in untracked_trackers:
 	print(f' * {u}\n')
+
+df_tracker_tally.to_csv("tracker_count.csv", encoding='utf-8', index=False)
+df_domain_tally.to_csv("domain_trackers.csv", encoding='utf-8', index=False)
